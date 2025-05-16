@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2em;
+            background-color: #f4f4f4;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2em;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 1em;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 0.5em;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="password"] {
+            padding: 0.5em;
+            margin-bottom: 1em;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .error {
+            color: red;
+            margin-bottom: 1em;
+            text-align: center;
+        }
+        button {
+            padding: 0.7em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login</h2>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="error">
+              {% for message in messages %}
+                <p>{{ message }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        <form method="post" action="{{ url_for('login') }}">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required autofocus />
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required />
+            <button type="submit">Log In</button>
+        </form>
+    </div>
+</body>
+</html>

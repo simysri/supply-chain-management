@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Supply Chain Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f7f8; }
+        h1, h2 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #007BFF; color: white; }
+        form { margin-bottom: 20px; background: white; padding: 15px; border-radius: 5px; }
+        input[type="text"], input[type="number"], input[type="email"], input[type="submit"], button {
+            padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px;
+        }
+        input[type="submit"], button {
+            background-color: #007BFF; color: white; border: none; cursor: pointer;
+        }
+        input[type="submit"]:hover, button:hover {
+            background-color: #0056b3;
+        }
+        .forecast {
+            background: #e9f5ff; padding: 10px; border-radius: 5px; margin-bottom: 20px;
+        }
+        nav a {
+            margin-right: 15px; text-decoration: none; color: #007BFF; font-weight: bold;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Supply Chain Management Dashboard</h1>
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('chatbot_route') }}">Chatbot</a>
+    </nav>
+
+    <section class="forecast">
+        <h2>Demand Forecast</h2>
+        <ul>
+            {% for product_id, forecast_qty in forecast.items() %}
+                <li>Product ID {{ product_id }}: Forecasted Demand = {{ forecast_qty }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section>
+        <h2>Suppliers</h2>
+        <form action="{{ url_for('add_supplier') }}" method="post">
+            <input type="number" name="supplier_id" placeholder="Supplier ID" required />
+            <input type="text" name="name" placeholder="Supplier Name" required />
+            <input type="email" name="contact_info" placeholder="Contact Email" required />
+            <input type="submit" value="Add Supplier" />
+        </form>
+        <table>
+            <thead>
+                <tr><th>ID</th><th>Name</th><th>Contact</th></tr>
+            </thead>
+            <tbody>
+                {% for supplier in scm.suppliers.values() %}
+                <tr>
+                    <td>{{ supplier.supplier_id }}</td>
+                    <td>{{ supplier.name }}</td>
+                    <td>{{ supplier.contact_info }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Products & Inventory</h2>
+        <form action="{{ url_for('add_product') }}" method="post">
+            <input type="number" name="product_id" placeholder="Product ID" required />
+            <input type="text" name="name" placeholder="Product Name" required />
+            <input type="number" step="0.01" name="price" placeholder="Price" required />
+            <input type="number" name="quantity" placeholder="Quantity" required />
+            <input type="submit" value="Add Product" />
+        </form>
+        <table>
+            <thead>
+                <tr><th>ID</th><th>Name</th><th>Price</th><th>Quantity</th><th>Update Quantity</th></tr>
+            </thead>
+            <tbody>
+                {% for product_id, (product, quantity) in scm.inventory.products.items() %}
+                <tr>
+                    <td>{{ product.product_id }}</td>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.price }}</td>
+                    <td>{{ quantity }}</td>
+                    <td>
+                        <form action="{{ url_for('update_quantity') }}" method="post" style="display:inline;">
+                            <input type="hidden" name="product_id" value="{{ product.product_id }}" />
+                            <input type="number" name="quantity" min="0" required />
+                            <input type="submit" value="Update" />
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Place Order</h2>
+        <form action="{{ url_for('place_order') }}" method="post">
+            <input type="number" name="order_id" placeholder="Order ID" required />
+            <input type="number" name="product_id" placeholder="Product ID" required />
+            <input type="number" name="quantity" placeholder="Quantity" required />
+            <input type="number" name="supplier_id" placeholder="Supplier ID" required />
+            <input type="submit" value="Place Order" />
+        </form>
+    </section>
+</body>
+</html>

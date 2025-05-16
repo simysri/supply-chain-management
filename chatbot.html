@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Supply Chain Chatbot</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f4f7f8; }
+        h1 { color: #333; }
+        #chatbox { width: 100%; max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 5px; }
+        #messages { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+        .message { margin-bottom: 10px; }
+        .user { color: #007BFF; }
+        .bot { color: #28a745; }
+        input[type="text"] { width: 80%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 12px; background-color: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Supply Chain Chatbot</h1>
+    <div id="chatbox">
+        <div id="messages"></div>
+        <form id="chat-form">
+            <input type="text" id="message-input" placeholder="Ask me something..." autocomplete="off" required />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('message-input');
+        const messages = document.getElementById('messages');
+
+        function appendMessage(text, sender) {
+            const div = document.createElement('div');
+            div.classList.add('message');
+            div.classList.add(sender);
+            div.textContent = (sender === 'user' ? 'You: ' : 'Bot: ') + text;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = input.value.trim();
+            if (!message) return;
+            appendMessage(message, 'user');
+            input.value = '';
+            try {
+                const response = await fetch('/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ message })
+                });
+                const data = await response.json();
+                appendMessage(data.response, 'bot');
+            } catch (error) {
+                appendMessage('Error: Could not reach chatbot.', 'bot');
+            }
+        });
+    </script>
+</body>
+</html>
