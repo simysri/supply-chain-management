@@ -1,51 +1,113 @@
-# supply-chain-management
-supply chain management (SCM) using AI and Python focuses on enhancing efficiency, reducing costs, and optimizing logistics through intelligent automation and predictive analytics. AI-powered solutions help businesses streamline operations, improve demand forecasting, and mitigate risks.
-https://d.docs.live.net/443fe0d1c7b0800b/Documents/simysri/simysri.docxhttps://d.docs.live.net/443fe0d1c7b0800b/Documents/simysri/simysri.docx
-Supply Chain management Document
-Overview
-supply chain management is a command-line utility designed to automate the renaming such as invoices, purchase orders, and shipment records. By standardizing file naming conventions, it enhances document organization and retrieval within SCM systems.
-Features
-•	Batch Renaming: Process multiple files simultaneously, applying consistent naming patterns.
-•	Customizable Naming Patterns: Define naming conventions that include supplier codes, shipment dates, and document types.
-•	File Type Filtering: Specify which file types (e.g., PDF, DOCX) to include or exclude from the renaming process.
-•	Readability Options: Choose between concise or descriptive file names to suit organizational needs.
-Installation
-1.	Clone the repository:
-bash
-Copy-edit
-git clone https://github.com/simysri/simysri.git
-cd simysri
-2.	Install dependencies:
-bash
-Copy-edit
-npm install
-Usage
-bash
-Copy-edit
-node simysri.py --directory "/path/to/documents" --pattern "{supplier code}_{document type}_{date}"
-Options
-•	--directory Specify the directory containing the documents to be renamed.
-•	--pattern Define the naming pattern using placeholders like {supplier code}, {document type}, and {date}.
-•	--filter Include or exclude specific file types (e.g., --filter pdf ,docx).
-•	--readability Toggle between concise (NO) and descriptive (YES) file names.
-Example
-bash
-Copy-edit
-node simysri.js --directory "/invoices/2025" --pattern "{supplier code}_{document type}_{date}" --filter pdf --readability YES
-This command renames all PDF invoices in the specified directory, incorporating supplier codes, document types, and dates into the file names.
-Contributing
-We welcome contributions that enhance the utility's functionality for SCM purposes. Please fork the repository, make your changes, and submit a pull request.
-License
-This project is licensed under the MIT License.
-________________________________________
-By adapting simysri for SCM applications, organizations can streamline document management processes, ensuring consistency and efficiency in handling critical supply chain documents.
-If you need further assistance or customization, feel free to ask!
-This code may be contains some errors, so do it carefully.
-Sources
 
-Attach
-Search
-Reason
-Voice
-Check important info. See Cookie and preview!
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash
+from models import SupplyChainManagement, Product, Supplier
+from ai import SupplyChainChatbot, demand_forecast
+import json
+import functools
 
+app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'  # Needed for session management
+
+scm = SupplyChainManagement()
+chatbot = SupplyChainChatbot()
+
+# Initialize with some sample data
+def init_sample_data():
+    supplier1 = Supplier(1, "Supplier A", "contactA@example.com")
+    supplier2 = Supplier(2, "Supplier B", "contactB@example.com")
+
+    scm.add_supplier(supplier1)
+    scm.add_supplier(supplier2)
+
+    product1 = Product(101, "Product 1", 10.0)
+    product2 = Product(102, "Product 2", 20.0)
+    scm.add_product_to_inventory(product1, 100)
+    scm.add_product_to_inventory(product2, 50)
+
+init_sample_data()
+
+def login_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        return view(**kwargs)
+    return wrapped_view
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        # Simple hardcoded check for demonstration
+        if username == 'admin' and password == 'password':
+            session['user'] = username
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/')
+@login_required
+def index():
+    forecast = demand_forecast(scm)
+    return render_template('index.html', scm=scm, forecast=forecast)
+
+@app.route('/add_supplier', methods=['POST'])
+@login_required
+def add_supplier():
+    supplier_id = int(request.form['supplier_id'])
+    name = request.form['name']
+    contact_info = request.form['contact_info']
+    supplier = Supplier(supplier_id, name, contact_info)
+    scm.add_supplier(supplier)
+    return redirect(url_for('index'))
+
+@app.route('/add_product', methods=['POST'])
+@login_required
+def add_product():
+    product_id = int(request.form['product_id'])
+    name = request.form['name']
+    price = float(request.form['price'])
+    quantity = int(request.form['quantity'])
+    product = Product(product_id, name, price)
+    scm.add_product_to_inventory(product, quantity)
+    return redirect(url_for('index'))
+
+@app.route('/update_quantity', methods=['POST'])
+@login_required
+def update_quantity():
+    product_id = int(request.form['product_id'])
+    quantity = int(request.form['quantity'])
+    scm.update_product_quantity(product_id, quantity)
+    return redirect(url_for('index'))
+
+@app.route('/place_order', methods=['POST'])
+@login_required
+def place_order():
+    order_id = int(request.form['order_id'])
+    product_id = int(request.form['product_id'])
+    quantity = int(request.form['quantity'])
+    supplier_id = int(request.form['supplier_id'])
+    try:
+        scm.place_order(order_id, product_id, quantity, supplier_id)
+    except ValueError as e:
+        return f"Error placing order: {e}", 400
+    return redirect(url_for('index'))
+
+@app.route('/chatbot', methods=['GET', 'POST'])
+@login_required
+def chatbot_route():
+    if request.method == 'POST':
+        message = request.form.get('message', '')
+        response = chatbot.respond(message)
+        return jsonify({'response': response})
+    return render_template('chatbot.html')
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
